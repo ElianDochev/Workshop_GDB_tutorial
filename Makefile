@@ -1,19 +1,22 @@
 NAME = test
 
-SRC_ONE = example1.c
-SRC_TWO = example2.c
-SRC_THREE = example3.c
+SRC_BUGGY = buggy_program.c
+SRC_FIXED = fixed_program.c
 
-all: example1 example2 example3
+CC = gcc
+CFLAGS = -lm
 
-example1: $(SRC_ONE)
-	gcc -g3 -o $@ $^ -D EXAMPLE=1
+all: buggy
 
-example2: $(SRC_TWO)
-	gcc -g3 -o $@ $^ -D EXAMPLE=2
+buggy: $(SRC_BUGGY)
+	$(CC) $(CFLAGS) -o $(NAME)_buggy $(SRC_BUGGY)
 
-example3: $(SRC_THREE)
-	gcc -g3 -o $@ $^ -D EXAMPLE=3
+fixed: $(SRC_FIXED)
+	$(CC) $(CFLAGS) -o $(NAME)_fixed $(SRC_FIXED)
 
 clean:
-	rm -f example1 example2 example3
+	rm -f $(NAME)_buggy $(NAME)_fixed
+
+re: clean all
+
+.PHONY: all clean re
