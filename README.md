@@ -128,7 +128,7 @@ watch var 					// Stop when var is modified
 watch -l foo				// Watch foo loaction
 rwatch foo					// Stop when foo is read
 watch foo if foo>10			// Watch foo conditionally
-delete						// Delete all breakpoints
+delete/clear						// Delete all breakpoints
 delete breakpoint_no		// Delete breakpoint breakpoint_no
 command breakpoint_no		// Run user listed commands when breakpoint is hit
 							  (End list of commands with 'end')
@@ -145,6 +145,14 @@ layout next
 ```
 
 Note: you will see nothing because the program is not run yet
+
+# FIY
+
+## if your layout gets broken dont worry just type
+
+```bash
+refresh
+```
 
 ## Running the program in gdb
 
@@ -206,8 +214,207 @@ quit
 now fix the bug and recompile the program. Then run it again and see where that gets us.
 
 ## Back to gdb
-Oh no! we have another bug. Lets go back to gdb and see what is going on.
+
+Oh no! we have infinite loop. Lets go back to gdb and see what is going on.
 
 We know how to do that so lets do it.
 
+## Printing arrays
 
+at first glance it would seem that the problem is in the **is_prime** function agian. However, if we step into we will see that it is working as expected (returns 0 on a non prime). so lets print the array result so see what is going on.
+
+Arrays are a bit tricky to print in gdb. To print an array you must first print the address of the array and then the number of elements you want to print. In our case we can do that with the following command:
+
+```bash
+print result@10
+```
+
+You will see that only the first element is correct and the other ones are just random
+numbers. This means that the problem is something with the iterator **x** for the prime numbers.
+
+## Setting breakpoints
+
+You might ask yourself what is a breakpoint. In simple terms a breakpoint is a point in the program where the debugger will stop the execution of the program and allow you to examine the state of the program meaning you can see the values of the variables and some other things. Let set a breakpoint at the start of the **getPrimes** function.
+
+```bash
+break getPrimes
+```
+
+Note: you can use a short version of the command by typing **b** instead of **break**
+
+Now lets run the program again and see what happens
+
+```bash
+run
+```
+
+## Examining **getPrimes** function
+
+Now we are in the function **getPrimes** the first time it is called, right at the beginning. Lets step into it and examine our variables. remember that we can use **print** to print the value of a variable.
+
+You can also use **info locals** to print the variables in the local scope and **info variables** to print the variables in the global scope.
+
+Take a good look at the code and examine our logic. What is the problem?
+
+Use **watch** to watch the value of **x**:
+
+```bash
+watch x
+```
+
+Hint: what does our iterator **x** do when we don't find a prime number?
+
+## Fixing the bug
+
+Now that we have found the bug with the **x** iterator lets fix it.
+
+Exit gdb.
+
+Remeber that we always want 2 as a prime number, so it might be a good idea to start the loop form the next one and just hardcode as the first element of our result array.
+
+Now recompile and run the program again.
+
+```bash
+make re
+./test_buggy
+```
+
+## Once again back to gdb
+
+Another bug, at least it is not a infinite loop anymore, but an incorect result. Not to worry our trusty friend gdb got our back.
+
+Lets start gdb agian and set a breakpoint at the main function. This can be done two ways:
+
+```bash
+break main
+run
+```
+
+or
+
+```bash
+start
+```
+
+## Print a pointer of an array
+
+Lets use next to get past our **getPrimes** function
+and get to the line **int s = sum(primes, n);**. Now lets print the array result. Remember that we can't just print the array like we did before. we must dereference the pointer to the array first and then specify the number of elements we want to print.
+
+```bash
+print *primes@10
+```
+
+## Print the sum
+
+As you can see the primes array is correct. Now lets print the sum and see what is going on.
+
+```bash
+next
+print s
+```
+
+Oh no! the sum is wrong. Lets examine the sum function.
+
+## Clearing breakpoints
+
+Lets clear the main breakpoint and set a new one at the sum function.
+
+```bash
+clear main
+break sum
+```
+
+Note: to clear all breakpoints use **delete** or **clear**
+
+after this lets rerun the program
+
+## Examine the sum function
+
+Using what you have learned so far lets examine the sum function and find the bug.
+
+Hint: what is the initial value of total? is it **+=** or **=+**?
+
+## Fixing the bug
+
+You know what to do. Exit gdb and fix the bug. then recompile and run the program again, but this time with a bigger number of primes to sum.
+
+```bash
+make re
+./test_buggy 20
+```
+
+Hmm this is strange How is the sum of the first 20 primes the same as the sum of the first 10 primes? Lets fire up gdb agian and see what is going on.
+
+## One last time back to gdb
+
+we need to run gdb but with arguments this time. We can do this in 2 ways:
+
+```bash
+gdb --args ./test_buggy 20
+```
+
+or after starting gdb
+
+```bash
+set args 20
+```
+
+Now set your layout to source code and set a breakpoint at the main function. You know how to do that.
+
+## Examine the main function
+
+print the argc and argv variables. What is going on?
+
+Wow! we see 3 problems. first argc is assigned to 2 not checked if it is 2. Second argv[2] is not initialized and will segfault when referenced(Is that really the first argument?). Third after convering the argument to an int we never assign it to n.
+
+## Fixing the bugs
+
+Lets fix the bugs and recompile the program. Then run it again and see what happens.
+
+```bash
+make re
+./test_buggy 20
+```
+
+We get the correct result or if you are lucky(or unlucky) you get a segfault. If you get a segfault then you have found another bug. If not then enable -Wall flag in our Makefile. This will enable all warnings and help us find some bugs.
+
+Oh no! we have a warning. We return a statically declared array from a function. This will kill our program. Lets fix that.
+
+This is an important lesson. Always enable all warnings when compiling your program. It will save you a lot of time when debugging.
+
+Hint: Who is **malloc** and what does he do?
+
+## Final step
+
+Our program is now bug free. Lets run it one last time and see the result.
+
+```bash
+make re
+./test_buggy 10000
+```
+
+hmm... it is returning a result but it seems to be a bit smaller than expected. Lets run it again with a bigger number.
+
+```bash
+./test_buggy 100000
+```
+
+ahh... it is returning a negative number. Why is this happening?
+
+Hint: ever heard of **int overflow**?
+
+## Oh no! not again
+
+Well it seem we still have a bug. Lets go back to gdb and see what is going on.
+
+Use what you have learned so far to find the bug and fix it.
+
+## Congratulations
+
+You have fixed all the bugs and know how to use gdb. You are now a debugging maestro! But are you sure that you have fixed all the bugs? Lets find out.
+
+# Note
+The working program is in fixed_program.c if you ever get stuck
+
+use **make fixed** to compile it and **./fixed_program n** to run it
