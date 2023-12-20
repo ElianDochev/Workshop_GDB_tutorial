@@ -81,16 +81,25 @@ The program should sum the first n prime numbers and print the result. However, 
 
 Note: the argument is optional and if not provided the program will default to 10
 
-The program will segfault. Now we will use gdb to find the bug.
+The program will be stuck in a infinite loop. Now we will use gdb to find the bug.
+
 ## Running the program in gdb
 
 ```bash
 gdb ./test_buggy
 ```
+
+Note: if you want you can assing the cmd line arguments in gdb with the following command:
+
+```bash
+gdb --args ./test_buggy \[Number of primes to sum\]
+```
+
 Here is a list of commands that you can use in gdb, we will go over them in the next steps:
 
 ```txt
 
+layout next					// Show source code in GUI
 info locals 				// Vars in local scope
 info variables				// Vars declared outside current scope
 info functions				// Names and datatypes of all defined functions
@@ -126,3 +135,79 @@ command breakpoint_no		// Run user listed commands when breakpoint is hit
 file executable 			// Load the executable for debugging from inside gdb
 quit						// Quit (short: q)
 ```
+
+## Display source code in gdb
+
+This line will display the source code in the GUI
+
+```bash
+layout next
+```
+
+Note: you will see nothing because the program is not run yet
+
+## Running the program in gdb
+
+```bash
+run
+```
+
+The program will be stuck in a infinite loop. Now we will use gdb to find the bug.
+press **_ctrl+c_** to stop the program so we can debug it
+
+## examine the code flow
+
+you will see that the program is stuck on line 57. To demosntrate that we will use the next command
+
+```bash
+next
+```
+
+You will see how the program is not progressing.
+
+Note: you can use a short version of the command by typing **n** instead of **nexts**
+
+lets print some of the variables to see what is going on
+
+```bash
+print i
+print x
+print n
+```
+
+Note: you can use a short version of the command by typing **p** instead of **print**
+Hint: if you use print(p) without any arguments it will print the last printed variable
+
+## Step into a function
+
+As you can see the problem is in the function **is_prime**. To go into the function we will use the step command. Remember that next goes over the function calls and step goes into the function calls, otherwise they behave the same.
+
+```bash
+step
+```
+
+Note: you can use a short version of the command by typing **s** instead of **step**
+
+lets print some numbers to see what is going on. use **print**. For example print **x**
+
+Hint: Doesn't that if statement look suspicious?
+
+## After finding the first bug
+
+Great job! You have found the first bug. Now lets fix it. To do that we must first exit the gdb. To do that we will use the quit command.
+I encourage you to think of some other corner cases that our programe might run into.
+
+Hint: how are negative numbers handled? what about 0 and 1?
+
+```bash
+quit
+```
+
+now fix the bug and recompile the program. Then run it again and see where that gets us.
+
+## Back to gdb
+Oh no! we have another bug. Lets go back to gdb and see what is going on.
+
+We know how to do that so lets do it.
+
+
